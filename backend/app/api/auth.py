@@ -71,10 +71,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/me", response_model=User)
-def read_users_me(current_user: UserModel = Depends(get_current_user)):
-    return current_user
-
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -93,3 +89,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None:
         raise credentials_exception
     return user
+
+@router.get("/me", response_model=User)
+def read_users_me(current_user: UserModel = Depends(get_current_user)):
+    return current_user
