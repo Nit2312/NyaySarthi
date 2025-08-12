@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { authAPI } from '../services/api';
 
 interface User {
   id: string;
@@ -32,23 +32,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     if (token) {
       // Verify token and get user info
-      fetchUserInfo(token);
+      fetchUserInfo();
     } else {
       setLoading(false);
     }
   }, []);
 
-  const fetchUserInfo = async (token: string) => {
+  const fetchUserInfo = async () => {
     try {
-      const response = await axios.get('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUser(response.data);
+      const userData = await authAPI.getCurrentUser();
+      setUser(userData);
     } catch (error) {
-      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
     } finally {
       setLoading(false);
     }
@@ -56,37 +54,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      // Mock admin credentials for demo
-      if (email === 'admin@nyaysarthi.com' && password === 'admin123') {
-        const adminUser = {
-          id: 'admin-1',
-          email: 'admin@nyaysarthi.com',
-          name: 'System Administrator',
-          avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-          role: 'admin' as const
-        };
-        setUser(adminUser);
-        localStorage.setItem('token', 'admin-jwt-token');
-        return;
-      }
+      const response = await authAPI.login(email, password);
+      localStorage.setItem('authToken', response.access_token);
       
-      // Mock regular user login
-      if (email === 'user@example.com' && password === 'password') {
-        const regularUser = {
-          id: 'user-1',
-          email: 'user@example.com',
-          name: 'Legal Professional',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-          role: 'user' as const
-        };
-        setUser(regularUser);
-        localStorage.setItem('token', 'user-jwt-token');
-        return;
-      }
-      
-      throw new Error('Invalid credentials');
+      // Get user info
+      const userData = await authAPI.getCurrentUser();
+      setUser(userData);
     } catch (error) {
-      throw new Error('Login failed');
+      throw error;
     }
   };
 
@@ -104,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
     setUser(null);
   };
 

@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import Layout from '../components/Layout';
+import { legalAPI } from '../services/api';
 
 interface Precedent {
   id: string;
@@ -205,27 +206,35 @@ The Basic Structure Doctrine continues to be relevant even today and serves as a
     setInputMessage('');
     setIsTyping(true);
 
-    // Simulate AI response based on the case
-    setTimeout(() => {
-      const responses = [
-        `Based on the ${precedent.title} case, the key principle established is that ${precedent.keyPoints[0].toLowerCase()}. This means that in your situation, you could argue that similar constitutional protections apply.`,
-        `The ${precedent.court} in this case ruled that ${precedent.summary.split('.')[0]}. This precedent can be particularly useful when dealing with ${precedent.tags[0].toLowerCase()} issues.`,
-        `This landmark case is often cited in ${precedent.tags.join(', ').toLowerCase()} matters. The court's reasoning about ${precedent.keyPoints[1].toLowerCase()} could strengthen your legal argument.`,
-        `The ${precedent.citation} decision established important precedents for ${precedent.tags.slice(0, 2).join(' and ').toLowerCase()}. You can use this case to support arguments about constitutional limitations.`
-      ];
-      
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      
+    try {
+      // Use AI service to get response
+      const response = await legalAPI.chatWithAI({
+        content: inputMessage,
+        context: { precedent: precedent.title }
+      });
+
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: randomResponse,
+        content: response.message,
         timestamp: new Date()
       };
 
       setChatMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error in AI chat:', error);
+      
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: 'I encountered an error while processing your question. Please try again.',
+        timestamp: new Date()
+      };
+
+      setChatMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

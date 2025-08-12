@@ -17,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolidIcon } from '@heroicons/react/24/solid';
 import Layout from '../components/Layout';
+import { legalAPI } from '../services/api';
 
 interface Precedent {
   id: string;
@@ -137,20 +138,37 @@ const PrecedentFinder: React.FC = () => {
     setInputMessage('');
     setIsTyping(true);
 
-    // Simulate AI processing
-    setTimeout(() => {
+    try {
+      // Search for precedents using the API
+      const searchResults = await legalAPI.searchPrecedents({
+        query: inputMessage,
+        limit: 5
+      });
+
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: `I've analyzed your case description. Here are the most relevant precedents that could help strengthen your legal argument:`,
+        content: `I've analyzed your case description and found ${searchResults.length} relevant precedents that could help strengthen your legal argument:`,
         timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-      setPrecedents(mockPrecedents);
+      setPrecedents(searchResults);
       setShowResults(true);
+    } catch (error) {
+      console.error('Error searching precedents:', error);
+      
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: 'I encountered an error while searching for precedents. Please try again or contact support if the issue persists.',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 2000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

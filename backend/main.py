@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 from app.core.config import settings
-from app.api import auth
+from app.api import auth, legal
 from app.core.database import engine, Base
 
 # Create database tables
@@ -29,6 +29,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include routers
 app.include_router(auth.router)
+app.include_router(legal.router)
 
 @app.get("/")
 async def root():

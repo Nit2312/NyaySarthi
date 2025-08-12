@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     
     # External API settings
     openai_api_key: Optional[str] = None
+    indian_kanoon_api_key: Optional[str] = None
+    huggingface_api_key: Optional[str] = None
     
     # Redis settings
     redis_url: str = "redis://localhost:6379"
